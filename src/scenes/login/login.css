@@ -1,0 +1,54 @@
+.divider-text {
+  position: relative;
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  color: #8392a5;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter UI", Roboto, sans-serif;
+  letter-spacing: 0.5px;
+  margin: 20px 0px 15px 0px !important;
+}
+
+.divider-text::after,
+.divider-text::before {
+  content: "";
+  display: block;
+  flex: 1;
+  height: 1px;
+  background-color: #e5e9f2;
+}
+
+.divider-text::before {
+  margin-right: 10px;
+}
+
+.divider-text::after {
+  margin-left: 10px;
+}
+
+.l-grid1 {
+  background-color: #f1f8fe !important;
+}
+
+.l-grid2 {
+  background-color: white !important;
+}
+
+.login-page {
+  background-color: #ffffff; /* Light background color */
+  color: #000000; /* Light text color */
+  /* Add any other styles as needed to match your light mode design */
+}
+/* Add this to your login.scss file */
+.custom-auth button[type="submit"] {
+  background: linear-gradient(to right, #16e500, #00a859) !important; /* Gradient for the button */
+  color: white !important; /* Ensure text is white for readability */
+  border: none !important; /* Remove any borders */
+}
+
+.custom-auth button[type="submit"]:hover {
+  background: linear-gradient(to right, #16e500, #00a859) !important; /* Same gradient for hover */
+  filter: brightness(0.9); /* Slight dimming on hover */
+}

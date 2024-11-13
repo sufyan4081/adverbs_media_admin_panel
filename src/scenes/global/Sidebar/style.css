@@ -1,0 +1,57 @@
+/* .pro-sidebar .pro-menu a {
+    text-decoration: none;
+    color: white;
+} */
+
+ol,ul{
+  padding-left: 0px !important;
+}
+.ps-sidebar-container css-dip3t8 {
+  background-color:green;
+}
+
+/* Add styles for the active link */
+.active-link:active {
+  color: black !important;
+  background-color: red !important;
+}
+
+.pro-menu-item.active {
+  background-color: blue !important;
+  color: white;
+}
+
+.active-link {
+  color: white !important;
+  text-decoration: none;
+}
+
+.parent-active {
+  color: white !important;
+  text-decoration: none;
+}
+.active-link:hover {
+  background-color: navy !important;
+  color: white !important;
+}
+
+.sidebar-list-item {
+  transform: translateY(0);
+  transition: transform 0.2s cubic-bezier(0.42, 0, 0.58, 1); /* Adjust the cubic-bezier values */
+}
+
+.sidebar-list-item:hover {
+  transform: translateY(
+    5px
+  
+  );
+}
+
+/* Add this to your style.css or a separate CSS file */
+.sidebar-list-item .icon-animation {
+  transition: transform 1s ease; /* Add a smooth transition for the transform property */
+}
+
+.sidebar-list-item:hover .icon-animation {
+  transform: rotate(360deg); /* Rotate the icon by 20 degrees on hover */
+}

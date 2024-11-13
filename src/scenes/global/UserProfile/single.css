@@ -1,0 +1,7 @@
+@media print {
+    /* Override dark mode styles and make content visible */
+    body .my-print-page {
+      background-color: white !important; /* Set a white background for printing */
+      color: black !important; /* Set black text for printing */
+    }
+  }
