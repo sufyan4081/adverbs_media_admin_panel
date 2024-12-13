@@ -1,24 +1,15 @@
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 
-export const addBlogCol = [
-  { name: "Title" },
-  { name: "Description" },
-  { name: "Blogger Name" },
-  { name: "Date" },
-  { name: "Images" },
-];
-export const addVlogCol = [
-  { name: "Logger Name" },
-  { name: "Date" },
-  { name: "Videos" },
-  { name: "Video Link" },
-];
-
-export const addCertificateCol = [
-  { name: "Title" },
-  { name: "Date" },
-  { name: "Code" },
-  { name: "Images" },
+export const userCol = [
+  { name: "Full Name" },
+  { name: "Mobile Number" },
+  { name: "Email" },
+  { name: "Password" },
+  { name: "Company Name" },
+  { name: "Country" },
+  { name: "State" },
+  { name: "City" },
+  { name: "Pin Code" },
 ];
 
 export const profileList = [

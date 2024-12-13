@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Paper,
-  Slide,
   Table,
   TableBody,
   TableCell,
@@ -18,15 +17,13 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import ModeEditIcon from "@mui/icons-material/ModeEdit";
 import styled from "@emotion/styled";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "jspdf-autotable";
 import DownloadButton from "../../components/downloadButton/DownloadButton";
 import SearchForm from "../../components/SearchForm";
-import { addBlogCol } from "../../data/mockData";
+import { userCol } from "../../data/mockData";
 import ViewModal from "./ViewModal";
-import EditDialogs from "../../components/EditDialogs/EditDialogs";
 import { QueryKeys } from "../../utils/QueryKey";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import DeleteModal from "../../components/DeleteModal";
@@ -34,9 +31,9 @@ import ColumnFilter from "../../components/ColumnFilter/ColumnFilter";
 import { handleDownloadPDF } from "../../components/DownloadPDF/handleDownloadPDF";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
-import { deleteBlog } from "../../api/Blog/blog_api";
 import { closeSnackbar, enqueueSnackbar } from "notistack";
 import CloseIcon from "@mui/icons-material/Close";
+import { deleteUser } from "../../api/User/user_api";
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${TableCell.head}`]: {
@@ -64,17 +61,22 @@ const StyledTableRow = styled(TableRow)(({ theme }) => ({
   },
 }));
 
-const AddBlogTable = ({ blogData, allData }) => {
+const UserTable = ({ userData }) => {
   const theme = useTheme();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [searchQuery, setSearchQuery] = useState("");
 
-  console.log("blogData", blogData);
+  console.log("userData", userData);
 
   // For column filtering
   const [anchorEl, setAnchorEl] = useState(null);
-  const defaultVisibleColumns = ["Title", "Images", "Actions"];
+  const defaultVisibleColumns = [
+    "Full Name",
+    "Mobile Number",
+    "Company Name",
+    "Actions",
+  ];
   const [visibleColumns, setVisibleColumns] = useState(defaultVisibleColumns);
 
   const handleToggleColumn = (columnName) => {
@@ -95,8 +97,6 @@ const AddBlogTable = ({ blogData, allData }) => {
   // Media query for small screens
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const queryClient = useQueryClient();
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedFormData, setSelectedFormData] = useState(null);
 
   // For delete user
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -104,10 +104,10 @@ const AddBlogTable = ({ blogData, allData }) => {
 
   // delete data mutation
   const mutationDelete = useMutation({
-    mutationFn: deleteBlog,
+    mutationFn: deleteUser,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: QueryKeys.blog });
-      enqueueSnackbar("Data Deleted Successfully", {
+      await queryClient.invalidateQueries({ queryKey: QueryKeys.user });
+      enqueueSnackbar("User Deleted Successfully", {
         variant: "success",
         anchorOrigin: { vertical: "top", horizontal: "center" },
         action: (key) => (
@@ -118,6 +118,7 @@ const AddBlogTable = ({ blogData, allData }) => {
       });
     },
   });
+
   const handleDeleteClick = (userId) => {
     setShowDeleteConfirmation(true);
     setUserIdToDelete(userId);
@@ -141,13 +142,8 @@ const AddBlogTable = ({ blogData, allData }) => {
 
   const handleCloseViewModal = () => setViewModalOpen(false);
 
-  const handleEditClick = (formData) => {
-    setSelectedFormData(formData);
-    setIsEditOpen(true);
-  };
-
-  const filteredData = blogData?.filter((item) =>
-    item.title.toLowerCase().startsWith(searchQuery.toLowerCase())
+  const filteredData = userData?.filter((item) =>
+    item.name.toLowerCase().startsWith(searchQuery.toLowerCase())
   );
 
   const iconColor = theme.palette.mode === "dark" ? "white" : "black";
@@ -155,6 +151,7 @@ const AddBlogTable = ({ blogData, allData }) => {
     theme.palette.mode === "dark" ? theme.palette.primary.main : "transparent";
 
   const totalLength = filteredData?.length || 0;
+  console.log("totalLength", totalLength);
 
   const handleChangePage = (event, newPage) => setPage(newPage);
 
@@ -167,10 +164,10 @@ const AddBlogTable = ({ blogData, allData }) => {
   const endIndex = startIndex + rowsPerPage;
   const paginatedData = filteredData?.slice(startIndex, endIndex);
 
-  // for download excel sheet of table data
+  // for download excel sheet
   const handleDownloadExcel = () => {
     const filteredAndVisibleData = paginatedData?.map((item, index) =>
-      addBlogCol
+      userCol
         .filter(
           (col) =>
             visibleColumns.includes(col.name) &&
@@ -178,28 +175,27 @@ const AddBlogTable = ({ blogData, allData }) => {
             col.name.toLowerCase() !== "subject logo"
         )
         .map((col) => {
-          if (col.name.toLowerCase() === "title" && item.title) {
-            return `${item.title}`;
-          } else if (col.name.toLowerCase() === "description" && item.content) {
-            return `${item.content}`;
+          if (col.name === "Full Name" && item.name) {
+            return `${item.name}`;
+          } else if (col.name === "Mobile Number" && item.mobileNumber) {
+            return `${item.mobileNumber}`;
+          } else if (col.name === "Email" && item.email) {
+            return `${item.email}`;
+          } else if (col.name === "Password" && item.password) {
+            return `${item.password}`;
           } else if (
-            col.name.toLowerCase() === "blogger name" &&
-            item.headerTitle
+            col.name === "Company Name" &&
+            item.companyDetails.companyName
           ) {
-            return `${item.headerTitle}`;
-          } else if (col.name.toLowerCase() === "date" && item.date) {
-            return `${item.date.slice(0, 10)}`;
-          } else if (
-            col.name.toLowerCase() === "images" &&
-            item.images.length > 0
-          ) {
-            return item?.images?.map((item, i) => (
-              <img
-                src={item[col.name.toLowerCase()]}
-                alt={item.title}
-                style={{ width: "50px", height: "50px" }}
-              />
-            ));
+            return `${item.companyDetails.companyName}`;
+          } else if (col.name === "Country" && item.companyDetails.country) {
+            return `${item.companyDetails.country}`;
+          } else if (col.name === "State" && item.companyDetails.state) {
+            return `${item.companyDetails.state}`;
+          } else if (col.name === "City" && item.companyDetails.city) {
+            return `${item.companyDetails.city}`;
+          } else if (col.name === "Pin Code" && item.companyDetails.pinCode) {
+            return `${item.companyDetails.pinCode}`;
           } else {
             return "No data available";
           }
@@ -208,7 +204,7 @@ const AddBlogTable = ({ blogData, allData }) => {
 
     // Create a worksheet
     const ws = XLSX.utils.aoa_to_sheet([
-      addBlogCol
+      userCol
         .filter(
           (col) =>
             visibleColumns.includes(col.name) &&
@@ -224,10 +220,10 @@ const AddBlogTable = ({ blogData, allData }) => {
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
 
     // Save the workbook
-    XLSX.writeFile(wb, "blog_data.xlsx");
+    XLSX.writeFile(wb, "User Data.xlsx");
   };
 
-  // Handle download PDF
+  // for download PDF
   const handleDownloadPDFClick = () => {
     const doc = new jsPDF();
     const columns = [
@@ -239,7 +235,7 @@ const AddBlogTable = ({ blogData, allData }) => {
     const rows = paginatedData?.map((item, index) => {
       const rowData = [
         index + 1,
-        ...addBlogCol
+        ...userCol
           .filter(
             (col) =>
               visibleColumns.includes(col.name) &&
@@ -247,33 +243,27 @@ const AddBlogTable = ({ blogData, allData }) => {
               col.name.toLowerCase() !== "images"
           )
           .map((col) => {
-            if (col.name.toLowerCase() === "title" && item.title) {
-              return `${item.title}`;
+            if (col.name === "Full Name" && item.name) {
+              return `${item.name}`;
+            } else if (col.name === "Mobile Number" && item.mobileNumber) {
+              return `${item.mobileNumber}`;
+            } else if (col.name === "Email" && item.email) {
+              return `${item.email}`;
+            } else if (col.name === "Password" && item.password) {
+              return `${item.password}`;
             } else if (
-              col.name.toLowerCase() === "description" &&
-              item.content
+              col.name === "Company Name" &&
+              item.companyDetails.companyName
             ) {
-              return `${item.content}`;
-            } else if (
-              col.name.toLowerCase() === "blogger name" &&
-              item.headerTitle
-            ) {
-              return `${item.headerTitle}`;
-            } else if (col.name.toLowerCase() === "date" && item.date) {
-              return `${item.date.slice(0, 10)}`;
-            } else if (
-              col.name.toLowerCase() === "images" &&
-              item.images.length > 0
-            ) {
-              return item?.images?.map((item, i) => (
-                <Tooltip title={item.title}>
-                  <img
-                    src={item[col.name.toLowerCase()]}
-                    alt={item.title}
-                    style={{ width: "50px", height: "50px" }}
-                  />
-                </Tooltip>
-              ));
+              return `${item.companyDetails.companyName}`;
+            } else if (col.name === "Country" && item.companyDetails.country) {
+              return `${item.companyDetails.country}`;
+            } else if (col.name === "State" && item.companyDetails.state) {
+              return `${item.companyDetails.state}`;
+            } else if (col.name === "City" && item.companyDetails.city) {
+              return `${item.companyDetails.city}`;
+            } else if (col.name === "Pin Code" && item.companyDetails.pinCode) {
+              return `${item.companyDetails.pinCode}`;
             } else {
               return "No data available";
             }
@@ -285,7 +275,7 @@ const AddBlogTable = ({ blogData, allData }) => {
 
     handleDownloadPDF({
       doc,
-      tableHeading: "blog_data",
+      tableHeading: "User Data",
       columns,
       rows,
     });
@@ -312,12 +302,12 @@ const AddBlogTable = ({ blogData, allData }) => {
         <SearchForm
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          title="Search by title name"
+          title="Search by full name"
         />
 
         {/* Column Filter */}
         <ColumnFilter
-          columns={addBlogCol}
+          columns={userCol}
           visibleColumns={visibleColumns}
           onToggleColumn={handleToggleColumn}
           anchorEl={anchorEl}
@@ -339,7 +329,7 @@ const AddBlogTable = ({ blogData, allData }) => {
               <StyledTableCell sx={{ textAlign: "center" }}>
                 Sr.No.
               </StyledTableCell>
-              {addBlogCol.map(
+              {userCol.map(
                 (col, i) =>
                   visibleColumns.includes(col.name) &&
                   col.name !== "Actions" && (
@@ -364,46 +354,67 @@ const AddBlogTable = ({ blogData, allData }) => {
                   <StyledTableCell sx={{ textAlign: "center" }}>
                     {startIndex + index + 1}
                   </StyledTableCell>
-                  {addBlogCol.map(
+                  {userCol.map(
                     (col, i) =>
                       visibleColumns.includes(col.name) && (
                         <StyledTableCell align="center" key={i}>
                           {(() => {
-                            if (
-                              col.name.toLowerCase() === "title" &&
-                              item.title
-                            ) {
-                              return `${item.title}`;
+                            if (col.name === "Full Name" && item.name) {
+                              return `${item.name}`;
                             } else if (
-                              col.name.toLowerCase() === "description" &&
-                              item.content
+                              col.name === "Mobile Number" &&
+                              item.mobileNumber
                             ) {
-                              return `${item.content}`;
+                              return `${item.mobileNumber}`;
+                            } else if (col.name === "Email" && item.email) {
+                              return `${item.email}`;
                             } else if (
-                              col.name.toLowerCase() === "blogger name" &&
-                              item.headerTitle
+                              col.name === "Password" &&
+                              item.password
                             ) {
-                              return `${item.headerTitle}`;
+                              return `${item.password}`;
+                            }
+                            // else if (
+                            //   col.name.toLowerCase() === "images" &&
+                            //   item.images
+                            // ) {
+                            //   return item?.images?.map((img, idx) => (
+                            //     <img
+                            //       src={`http://ec2-13-232-51-190.ap-south-1.compute.amazonaws.com:5000${img}`} // Use the image URL here
+                            //       alt={`image-${idx}`} // Provide a unique alt text for each image
+                            //       style={{
+                            //         width: "50px",
+                            //         height: "50px",
+                            //         marginRight: "10px",
+                            //       }} // Styling for the image
+                            //     />
+                            //   ));
+                            // }
+                            else if (
+                              col.name === "Company Name" &&
+                              item.companyDetails.companyName
+                            ) {
+                              return `${item.companyDetails.companyName}`;
                             } else if (
-                              col.name.toLowerCase() === "date" &&
-                              item.date
+                              col.name === "Country" &&
+                              item.companyDetails.country
                             ) {
-                              return `${item.date.slice(0, 10)}`;
+                              return `${item.companyDetails.country}`;
                             } else if (
-                              col.name.toLowerCase() === "images" &&
-                              item.images
+                              col.name === "State" &&
+                              item.companyDetails.state
                             ) {
-                              return item?.images?.map((img, idx) => (
-                                <img
-                                  src={`http://ec2-13-232-51-190.ap-south-1.compute.amazonaws.com:5000${img}`} // Use the image URL here
-                                  alt={`image-${idx}`} // Provide a unique alt text for each image
-                                  style={{
-                                    width: "50px",
-                                    height: "50px",
-                                    marginRight: "10px",
-                                  }} // Styling for the image
-                                />
-                              ));
+                              return `${item.companyDetails.state}`;
+                            } else if (
+                              col.name === "City" &&
+                              item.companyDetails.city
+                            ) {
+                              return `${item.companyDetails.city}`;
+                            } else if (
+                              col.name === "Pin Code" &&
+                              item.companyDetails.pinCode
+                            ) {
+                              return `${item.companyDetails.pinCode}`;
                             } else {
                               return "No data available";
                             }
@@ -421,13 +432,6 @@ const AddBlogTable = ({ blogData, allData }) => {
                       <VisibilityIcon sx={{ color: iconColor }} />
                     </Button>
                     <Button
-                      onClick={() => handleEditClick(item)}
-                      title="Edit"
-                      sx={{ minWidth: "30px", padding: "0px" }}
-                    >
-                      <ModeEditIcon sx={{ color: iconColor }} />
-                    </Button>
-                    <Button
                       title="Delete"
                       sx={{ minWidth: "30px", padding: "0px" }}
                     >
@@ -442,7 +446,7 @@ const AddBlogTable = ({ blogData, allData }) => {
             ) : (
               <TableRow>
                 <StyledTableCell
-                  colSpan={addBlogCol.length + 2}
+                  colSpan={userCol.length + 2}
                   sx={{ textAlign: "center" }}
                 >
                   No matching records found.
@@ -478,7 +482,7 @@ const AddBlogTable = ({ blogData, allData }) => {
               lineHeight: "1.5", // Adjust to match pagination height if necessary
             }}
           >
-            Total Blog: {totalLength}
+            Total Users: {totalLength}
           </Typography>
         </Box>
 
@@ -517,7 +521,7 @@ const AddBlogTable = ({ blogData, allData }) => {
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}
               component="div"
-              count={allData}
+              count={totalLength}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={handleChangePage}
@@ -543,15 +547,6 @@ const AddBlogTable = ({ blogData, allData }) => {
         data={selectedDataForView}
       />
 
-      {/* Edit modal */}
-      <EditDialogs
-        formData={selectedFormData}
-        open={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-        title="Blog"
-        tableName="Blog"
-      />
-
       {/* Delete Confirmation Dialog */}
       <DeleteModal
         showDeleteConfirmation={showDeleteConfirmation}
@@ -562,4 +557,4 @@ const AddBlogTable = ({ blogData, allData }) => {
   );
 };
 
-export default AddBlogTable;
+export default UserTable;

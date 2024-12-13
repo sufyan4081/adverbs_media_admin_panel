@@ -1,8 +1,5 @@
 const QueryKeys = {
-  blog: ["blog"],
-  vlog: ["vlog"],
-  certificate: ["certificate"],
-  profileUpdate: ["profileUpdate"],
+  user: ["user"],
 };
 
 export { QueryKeys };

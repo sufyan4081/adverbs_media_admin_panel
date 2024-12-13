@@ -1,18 +1,35 @@
 import { Box, CircularProgress, Grid } from "@mui/material";
 import StatsBox from "./StatsBox";
-import InsertPhotoIcon from "@mui/icons-material/InsertPhoto";
-import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import Header from "../../components/Header";
 import { QueryKeys } from "../../utils/QueryKey";
-import { fetchBlogs } from "../../api/Blog/blog_api";
 import { useQuery } from "@tanstack/react-query";
-import { fetchVlogs } from "../../api/Vlog/vlog_api";
 import { useSelector } from "react-redux";
-import { fetchCertificates } from "../../api/Certificate/certificate_api";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import { fetchUser } from "../../api/User/user_api";
 const Dashboard = () => {
   // Get user details from Redux state
   const user = useSelector((state) => state.user.user);
+
+  const {
+    data: userLength,
+    isLoading: isUserLoading,
+    isError: isUserError,
+    error: userError,
+  } = useQuery({
+    queryFn: fetchUser,
+    queryKey: QueryKeys.user,
+  });
+
+  if (isUserLoading) {
+    return (
+      <Grid align="center" sx={{ marginTop: "10px" }}>
+        <CircularProgress sx={{ color: "#20209f" }} />
+      </Grid>
+    );
+  }
+  if (isUserError) {
+    return <p>Error: {userError.message}</p>;
+  }
 
   return (
     <Box data-aos="fade">
@@ -52,7 +69,7 @@ const Dashboard = () => {
             flexWrap="wrap"
           >
             <StatsBox
-              total="2"
+              total={userLength ? userLength?.length : "Not Available"}
               name="Total Users"
               to="/users"
               icon={
