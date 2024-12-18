@@ -1,11 +1,5 @@
-import React, { useState, useEffect, useContext } from "react";
-import {
-  Box,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  useTheme,
-} from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Box } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import ProfileIcon from "../UserProfile/ProfileIcon";
 import { sideBarList } from "../../../data/mockData";

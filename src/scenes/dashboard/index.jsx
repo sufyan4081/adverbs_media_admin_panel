@@ -3,13 +3,12 @@ import StatsBox from "./StatsBox";
 import Header from "../../components/Header";
 import { QueryKeys } from "../../utils/QueryKey";
 import { useQuery } from "@tanstack/react-query";
-import { useSelector } from "react-redux";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { fetchUser } from "../../api/User/user_api";
-const Dashboard = () => {
-  // Get user details from Redux state
-  const user = useSelector((state) => state.user.user);
+import { useSelector } from "react-redux";
 
+const Dashboard = () => {
+  const adminData = useSelector((state) => state.admin.admin);
   const {
     data: userLength,
     isLoading: isUserLoading,
@@ -58,8 +57,9 @@ const Dashboard = () => {
         <Box sx={{ width: "100%" }}>
           <Header
             title="DASHBOARD"
-            // subtitle={`Welcome ${user ? user?.account?.name : "Admin"}`}
-            subtitle="Welcome Admin"
+            subtitle={`Welcome ${adminData ? adminData?.name : "Admin"} - ${
+              adminData && adminData?.role
+            }`}
           />
           <Box
             display="grid"

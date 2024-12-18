@@ -1,292 +1,214 @@
-import React, { useContext, useEffect } from "react";
-import { Avatar, Box, Button, Container, Typography } from "@mui/material";
+import React, { useState } from "react";
+import { Box, Button } from "@mui/material";
 import "./single.css";
-import Header from "../../../components/Header";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { closeSnackbar, enqueueSnackbar } from "notistack";
-import { QueryKeys } from "../../../utils/QueryKey";
-import CloseIcon from "@mui/icons-material/Close";
+import { useMutation } from "@tanstack/react-query";
 import * as Yup from "yup";
-import { useFormik } from "formik";
-import { InputForm } from "../../../components/InputForm";
-import { useSelector } from "react-redux";
+import { Formik } from "formik";
+import { useDispatch, useSelector } from "react-redux";
 import BreadCrumbs from "../../../components/BreadCrumbs";
-
-const initialValues = {
-  email: "",
-  password: "",
-  name: "",
-  phone_number: "",
-  age: "",
-  gender: "",
-  city: "",
-  role: "",
-};
+import { getAdminData } from "../../../Redux/AdminSlice";
+import { CustomTextField } from "../../../components/CustomTextField";
+import { updateAdminProfile } from "../../../api/Auth/updateUserProfile";
 
 const UserProfile = () => {
-  // Get user details from Redux state
-  const user = useSelector((state) => state.user.user);
+  // Get adminData details from Redux state
+  const adminData = useSelector((state) => state.admin.admin);
+  console.log("adminData", adminData);
+  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
 
-  const queryClient = useQueryClient();
-
-  // post the data
-  const createPostMutation = useMutation({
-    // mutationFn: createVlog,
-    onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: QueryKeys.profileUpdate });
-
-      enqueueSnackbar("Profile Updated Successfully", {
-        variant: "success",
-        anchorOrigin: { vertical: "top", horizontal: "center" },
-        action: (key) => (
-          <Button onClick={() => closeSnackbar(key)} color="success">
-            <CloseIcon />
-          </Button>
-        ),
-      });
-      handleReset();
-    },
-    onError: (error) => {
-      enqueueSnackbar("An error occurred while updating the profile", {
-        variant: "error",
-        anchorOrigin: { vertical: "top", horizontal: "center" },
-        action: (key) => (
-          <Button onClick={() => closeSnackbar(key)} color="success">
-            <CloseIcon />
-          </Button>
-        ),
-      });
-    },
-  });
+  const initialValues = {
+    adminId: adminData?._id || "",
+    email: adminData?.email || "",
+    password: adminData?.password || "",
+    name: adminData?.name || "",
+    role: adminData?.role || "",
+  };
 
   const validationSchema = Yup.object({
     email: Yup.string().required("Email is required"),
     password: Yup.string().required("Password is required"),
     name: Yup.string().required("Name is required"),
-    phone_number: Yup.string().required("Phone number is required"),
-    age: Yup.string().required("Age is required"),
-    gender: Yup.string().required("Gender is required"),
-    city: Yup.string().required("City is required"),
     role: Yup.string().required("Role is required"),
   });
 
-  const onSubmit = async (values) => {
-    try {
-      if (user) {
-        await createPostMutation.mutateAsync(values);
-        handleReset();
-      } else {
-        enqueueSnackbar("Profile Can't Update", {
-          variant: "error",
-          anchorOrigin: { vertical: "top", horizontal: "center" },
-          action: (key) => (
-            <Button onClick={() => closeSnackbar(key)} color="success">
-              <CloseIcon />
-            </Button>
-          ),
-        });
-      }
-    } catch (error) {
-      console.error("Error while adding/updating the data:", error);
-      enqueueSnackbar("An error occurred while adding the new data", {
-        variant: "error",
-        anchorOrigin: { vertical: "top", horizontal: "center" },
-        action: (key) => (
-          <Button onClick={() => closeSnackbar(key)} color="success">
-            <CloseIcon />
-          </Button>
-        ),
-      });
-    }
-  };
-
-  const formik = useFormik({
-    onSubmit,
-    initialValues,
-    validationSchema,
-    validateOnMount: false, // Don't validate on mount
-    validateOnBlur: true, // Validate when fields are blurred
-    validateOnChange: false, // Optionally, set to false to only validate on submit/blur
+  const updateMutation = useMutation({
+    mutationFn: (payload) => updateAdminProfile(payload),
+    onSuccess: (data, id) => {
+      dispatch(getAdminData(data.data));
+      console.log("updateMutation", data);
+      console.log("updateMutationId", id);
+      setLoading(false);
+    },
+    onError: (error) => {
+      console.error(error);
+      setLoading(false);
+    },
   });
 
-  const { setValues, resetForm, handleSubmit } = formik;
-
-  // Effect to update form values when the user is available
-  useEffect(() => {
-    if (user) {
-      // Make a shallow copy of user object to avoid mutating
-      const updatedUser = { ...user.account }; // Ensures immutability
-      // Update formik values when the user object is loaded
-      setValues({
-        name: updatedUser?.name || "",
-        email: updatedUser?.email || "",
-        password: updatedUser?.password || "",
-        phone_number: updatedUser?.phone_number || "",
-        city: updatedUser?.city || "",
-        age: updatedUser?.age || "",
-        gender: updatedUser?.gender || "",
-        role: updatedUser?.role || "",
-      });
-    }
-  }, [user, setValues]); // Runs when user or setValues changes
-
-  const handleReset = () => {
-    resetForm();
+  const handleUpdate = async (values) => {
+    console.log("values", values);
+    setLoading(true);
+    const payload = {
+      adminId: values.adminId, // Use adminId from values
+      name: values.name,
+      role: values.role,
+      email: values.email,
+      password: values.password,
+    };
+    await updateMutation.mutate(payload);
   };
 
   return (
-    <>
-      <Box m="0px 0px 0px 0px">
-        <BreadCrumbs pageName="My Profile" title="Edit Profile" />
-        <Box
-          sx={{
-            width: {
-              lg: "700px",
-              md: "500px",
-              sm: "400px",
-              xs: "300px",
-            },
-            margin: "auto auto",
-          }}
-        >
-          <fieldset style={{ border: "1px solid grey", width: "100%" }}>
-            <legend
-              style={{
-                float: "none",
-                width: "auto",
-                margin: "0 8px 0 5px",
-                padding: "0 5px 0 5px",
-                fontSize: ".8rem",
-              }}
-            >
-              Edit Profile
-            </legend>
+    <Formik
+      initialValues={initialValues}
+      validationSchema={validationSchema}
+      onSubmit={handleUpdate}
+    >
+      {({ handleSubmit, touched, errors }) => {
+        return (
+          <Box m="0px 0px 0px 0px">
+            <BreadCrumbs pageName="My Profile" title="Update Profile" />
             <Box
               sx={{
-                display: "flex",
-                padding: "15px",
-                gap: "10px",
-                width: "100%",
-                justifyContent: "center",
-                alignItems: "center",
+                width: {
+                  lg: "700px",
+                  md: "500px",
+                  sm: "400px",
+                  xs: "300px",
+                },
+                margin: "auto auto",
               }}
             >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  flexDirection: "column",
-                  gap: "10px",
-                  width: "100%",
-                  justifyContent: "center",
-                }}
-              >
-                {/* name, email */}
+              <fieldset style={{ border: "1px solid grey", width: "100%" }}>
+                <legend
+                  style={{
+                    float: "none",
+                    width: "auto",
+                    margin: "0 8px 0 5px",
+                    padding: "0 5px 0 5px",
+                    fontSize: ".8rem",
+                  }}
+                >
+                  Update Profile
+                </legend>
                 <Box
                   sx={{
                     display: "flex",
-                    alignItems: "flex-start",
+                    padding: "15px",
                     gap: "10px",
-                    mb: 2,
                     width: "100%",
+                    justifyContent: "center",
+                    alignItems: "center",
                   }}
                 >
-                  <InputForm
-                    type="text"
-                    formik={formik}
-                    name="name"
-                    placeholder="Edit Name"
-                  />
-                  <InputForm
-                    type="text"
-                    formik={formik}
-                    name="email"
-                    placeholder="Edit Email"
-                  />
-                </Box>
-
-                {/* password, phone_number */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "10px",
-                    mb: 2,
-                    width: "100%",
-                  }}
-                >
-                  <InputForm
-                    type="text"
-                    formik={formik}
-                    name="password"
-                    placeholder="Edit Password"
-                  />
-                  <InputForm
-                    type="text"
-                    formik={formik}
-                    name="phone_number"
-                    placeholder="Edit Phone Number"
-                  />
-                </Box>
-
-                {/* city, age */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: "10px",
-                    mb: 2,
-                    width: "100%",
-                  }}
-                >
-                  <InputForm
-                    type="text"
-                    formik={formik}
-                    name="city"
-                    placeholder="Edit City"
-                  />
-                  <InputForm
-                    type="text"
-                    formik={formik}
-                    name="age"
-                    placeholder="Edit Age"
-                  />
-                </Box>
-
-                {/* submit button */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    width: "100%",
-                    gap: "10px",
-                    marginTop: "15px",
-                  }}
-                >
-                  <InputForm
-                    type="text"
-                    formik={formik}
-                    name="role"
-                    placeholder="Edit Role"
-                  />
-                  <Box width="100%" textAlign="right">
-                    <Button
-                      className="submit-button"
-                      variant="contained"
-                      onClick={handleSubmit}
-                      size="small"
-                      sx={{ textAlign: "right", width: "100px" }}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      flexDirection: "column",
+                      gap: "10px",
+                      width: "100%",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {/* name, email */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "10px",
+                        width: "100%",
+                      }}
                     >
-                      Save
-                    </Button>
+                      <CustomTextField
+                        label="Name"
+                        name="name"
+                        placeholder="Enter Name"
+                        helperText={
+                          touched.name && errors.name ? errors.name : ""
+                        }
+                        fieldLabel={false}
+                      />
+                      <CustomTextField
+                        label="Email"
+                        name="email"
+                        placeholder="Enter Email"
+                        helperText={
+                          touched.email && errors.email ? errors.email : ""
+                        }
+                        fieldLabel={false}
+                      />
+                    </Box>
+
+                    {/* password, phone_number */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "10px",
+                        width: "100%",
+                      }}
+                    >
+                      <CustomTextField
+                        label="Password"
+                        name="password"
+                        placeholder="Enter Password"
+                        helperText={
+                          touched.password && errors.password
+                            ? errors.password
+                            : ""
+                        }
+                        fieldLabel={false}
+                      />
+                      <CustomTextField
+                        label="Role"
+                        name="role"
+                        placeholder="Enter Role"
+                        helperText={
+                          touched.role && errors.role ? errors.role : ""
+                        }
+                        fieldLabel={false}
+                      />
+                    </Box>
+
+                    {/* submit button */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        width: "200px",
+                        gap: "10px",
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        sx={{
+                          width: "100%",
+                          padding: "10px",
+                          backgroundColor: "rgb(45, 51, 89)",
+                          color: "white",
+                          fontWeight: "bold",
+                          borderRadius: "5px",
+                          "&:hover": {
+                            backgroundColor: "rgb(45, 51, 89)",
+                          },
+                          textTransform: "capitalize",
+                        }}
+                        disabled={loading}
+                        onClick={handleSubmit}
+                      >
+                        {loading ? "Loading..." : "Save"}
+                      </Button>
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
+              </fieldset>
             </Box>
-          </fieldset>
-        </Box>
-      </Box>
-    </>
+          </Box>
+        );
+      }}
+    </Formik>
   );
 };
 

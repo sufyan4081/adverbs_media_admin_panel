@@ -10,10 +10,13 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { profileList } from "../../../data/mockData";
+import { resetAdminData } from "../../../Redux/AdminSlice";
+import { useDispatch } from "react-redux";
 const ProfileIcon = () => {
   const [anchorElUser, setAnchorElUser] = useState(null);
   const theme = useTheme();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   //for profile link color
   const iconColor = theme.palette.mode === "dark" ? "white" : "black";
 
@@ -28,6 +31,7 @@ const ProfileIcon = () => {
 
   async function signOut() {
     localStorage.removeItem("token");
+    dispatch(resetAdminData());
     navigate("/");
   }
 
